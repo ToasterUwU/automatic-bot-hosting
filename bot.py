@@ -11,12 +11,16 @@ logging.basicConfig(filename="bot.log", filemode="w+", level=logging.INFO)
 intents = nextcord.Intents.default()
 intents.members = True
 intents.presences = True
+intents.message_content = True
 
 bot = Bot(PREFIX, case_insensitivity=True, intents=intents)
 bot.remove_command("help")
 
 if TOKEN == "":
-    TOKEN = input("Token is not set in config.py, please enter the token there to surpress this input.\n\nToken: ")
+    TOKEN = input(
+        "Token is not set in config.py, please enter the token there to surpress this input.\n\nToken: "
+    )
+
 
 @bot.event
 async def on_ready():
