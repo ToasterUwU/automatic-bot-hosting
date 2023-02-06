@@ -103,8 +103,9 @@ class BotSetup(commands.Cog):
             if should_update:
                 fetch_info = Repo(repo_dir).remote().pull()
                 if len(fetch_info) > 0:
+                    changes = '\n'.join([str(x) for x in fetch_info])
                     await self.log(
-                        f"`UPDATED:` {repo_dir} with `{len(fetch_info)}` changes.\n{'\n'.join([str(x) for x in fetch_info])}"
+                        f"`UPDATED:` {repo_dir} with `{len(fetch_info)}` changes.\n{changes}"
                     )
 
     @nextcord.slash_command(
