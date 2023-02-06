@@ -3,13 +3,14 @@ import subprocess
 import sys
 
 import nextcord
-from config import *
 from nextcord.ext import commands
 
-from ._functions import *
+from config import *
+from internal_tools.configuration import CONFIG
+from internal_tools.discord import *
 
 
-class Example(commands.Cog):
+class BotSetup(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
         self.SERVICE_PATH = "/lib/systemd/system"
@@ -18,34 +19,21 @@ class Example(commands.Cog):
         with open("SERVICE_TEMPLATE.service") as f:
             self.SERVICE_TEMPLATE = f.read()
 
-    async def cog_check(self, ctx: commands.Context):
-        return await self.bot.is_owner(ctx.author)
+    async def cog_application_command_check(self, interaction: nextcord.Interaction):
+        """
+        You need to be the Owner of the Bot to use this.
+        """
+        if interaction.user:
+            if isinstance(interaction.user, nextcord.Member):
+                user = interaction.user._user
+            else:
+                user = interaction.user
 
-    @commands.command("setup")
-    async def setup_new_bot(self, ctx: commands.Context, name: str):
-        if ctx.message.attachments == []:
-            return await ctx.reply("No attachment found")
+            return await self.bot.is_owner(user)
+        else:
+            return False
 
-        try:
-            await ctx.message.attachments[0].save(self.BOT_ROOT_PATH + "/temp.zip")
-        except:
-            return await ctx.reply("Error while saving zip file")
-
-        try:
-            os.mkdir(f"{self.BOT_ROOT_PATH}/{name}")
-        except FileExistsError:
-            pass
-        except:
-            return await ctx.reply("Error while making directory")
-
-        try:
-            subprocess.Popen(
-                f"unzip -o -q {self.BOT_ROOT_PATH}/temp.zip -d {self.BOT_ROOT_PATH}/{name}",
-                shell=True,
-            ).communicate()
-        except:
-            return await ctx.reply("Error while extracting zip file")
-
+    def setup_new_bot(self, name: str):
         try:
             service = self.SERVICE_TEMPLATE.format(
                 name=name, BOT_ROOT_PATH=self.BOT_ROOT_PATH
@@ -53,7 +41,7 @@ class Example(commands.Cog):
             with open(f"{self.SERVICE_PATH}/discord-bot-{name}.service", "w+") as f:
                 f.write(service)
         except:
-            return await ctx.reply("Error while saving service file")
+            return "Error while saving service file"
 
         try:
             subprocess.Popen(
@@ -62,7 +50,7 @@ class Example(commands.Cog):
                 stderr=sys.stderr,
             ).communicate()
         except:
-            return await ctx.reply("Error while making venv.")
+            return "Error while making venv."
 
         try:
             subprocess.Popen(
@@ -71,7 +59,7 @@ class Example(commands.Cog):
                 stderr=sys.stderr,
             ).communicate()
         except:
-            return await ctx.reply("Error while getting dependencies.")
+            return "Error while getting dependencies."
 
         try:
             subprocess.Popen(
@@ -80,7 +68,7 @@ class Example(commands.Cog):
                 stderr=sys.stderr,
             ).communicate()
         except:
-            return await ctx.reply("Error while enabling service file")
+            return "Error while enabling service file"
 
         try:
             subprocess.Popen(
@@ -89,10 +77,58 @@ class Example(commands.Cog):
                 stderr=sys.stderr,
             ).communicate()
         except:
-            return await ctx.reply("Error while starting service")
+            return "Error while starting service"
 
-        await ctx.reply("Bot set up and running.")
+        return "Bot set up and running."
+
+    @nextcord.slash_command(
+        name="manual-setup",
+        description="Uses a source_code.zip to setup Bot. This requires manual updates.",
+        guild_ids=CONFIG["GENERAL"]["OWNER_COG_GUILD_IDS"],
+    )
+    async def manual_setup(
+        self,
+        interaction: nextcord.Interaction,
+        name: str,
+        source_code: nextcord.Attachment,
+    ):
+        await interaction.response.defer()
+
+        try:
+            await source_code.save(self.BOT_ROOT_PATH + "/temp.zip")
+        except:
+            await interaction.send("Error while saving zip file")
+            return
+
+        try:
+            os.mkdir(f"{self.BOT_ROOT_PATH}/{name}")
+        except FileExistsError:
+            pass
+        except:
+            await interaction.send("Error while making directory")
+            return
+
+        try:
+            subprocess.Popen(
+                f"unzip -o -q {self.BOT_ROOT_PATH}/temp.zip -d {self.BOT_ROOT_PATH}/{name}",
+                shell=True,
+            ).communicate()
+        except:
+            await interaction.send("Error while extracting zip file")
+            return
+
+        await interaction.send(self.setup_new_bot(name))
+
+    @nextcord.slash_command(
+        name="github-setup",
+        description="Uses a GitHub repo to setup Bot. This will automatically update from main branch.",
+        guild_ids=CONFIG["GENERAL"]["OWNER_COG_GUILD_IDS"],
+    )
+    async def github_setup(
+        self, interaction: nextcord.Interaction, github_repo_name: str
+    ):
+        pass
 
 
 def setup(bot):
-    bot.add_cog(Example(bot))
+    bot.add_cog(BotSetup(bot))
