@@ -111,12 +111,16 @@ class BotSetup(commands.Cog):
             if should_update:
                 fetch_info = Repo(repo_dir).remote().pull()
                 if len(fetch_info) > 0:
-                    await self.setup_bot(repo_dir.rsplit("/", 1)[1])
-
-                    changes = "\n".join([str(x) for x in fetch_info])
-                    await self.log(
-                        f"`UPDATED:` {repo_dir} with `{len(fetch_info)}` changes.\n{changes}"
-                    )
+                    end_message = await self.setup_bot(repo_dir.rsplit("/", 1)[1])
+                    if end_message != "Bot set up and running.":
+                        changes = "\n".join([str(x) for x in fetch_info])
+                        await self.log(
+                            f"`UPDATED:` {repo_dir} with `{len(fetch_info)}` changes.\n{changes}"
+                        )
+                    else:
+                        await self.log(
+                            f"`ERROR:` {repo_dir} Couldnt update.\n{end_message}"
+                        )
 
     @nextcord.slash_command(
         name="manual-setup",
