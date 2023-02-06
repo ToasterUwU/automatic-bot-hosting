@@ -113,7 +113,7 @@ class BotSetup(commands.Cog):
                 if len(fetch_info) > 0:
                     end_message = await self.setup_bot(repo_dir.rsplit("/", 1)[1])
                     if end_message == "Bot set up and running.":
-                        changes = "\n".join([str(x) for x in fetch_info])
+                        changes = "\n".join([str(x.commit) for x in fetch_info])
                         await self.log(
                             f"`UPDATED:` {repo_dir} with `{len(fetch_info)}` changes.\n{changes}"
                         )
