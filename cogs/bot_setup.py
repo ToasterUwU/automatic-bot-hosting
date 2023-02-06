@@ -109,18 +109,26 @@ class BotSetup(commands.Cog):
     async def update_repos(self):
         for repo_dir, should_update in self.repodirs_to_update.items():
             if should_update:
-                fetch_info = Repo(repo_dir).remote().pull()
-                if len(fetch_info) > 0:
-                    end_message = await self.setup_bot(repo_dir.rsplit("/", 1)[1])
-                    if end_message == "Bot set up and running.":
-                        changes = "\n".join([str(x.commit) for x in fetch_info])
-                        await self.log(
-                            f"`UPDATED:` {repo_dir} with `{len(fetch_info)}` changes.\n{changes}"
-                        )
-                    else:
-                        await self.log(
-                            f"`ERROR:` {repo_dir} Couldnt update.\n{end_message}"
-                        )
+                repo = Repo(repo_dir)
+                head = repo.head.ref
+                tracking = head.tracking_branch()
+                if tracking:
+                    missing_commits = tracking.commit.list_items(
+                        repo, f"{head.path}..{tracking.path}"
+                    )
+
+                    if len(missing_commits) > 0:
+                        repo.remote().pull()
+
+                        end_message = await self.setup_bot(repo_dir.rsplit("/", 1)[1])
+                        if end_message == "Bot set up and running.":
+                            await self.log(f"`UPDATED:` {repo_dir}")
+                        else:
+                            await self.log(
+                                f"`ERROR:` {repo_dir} Couldnt update.\n{end_message}"
+                            )
+                else:
+                    await self.log(f"`ERROR:` {repo_dir} Couldnt reach GitHub")
 
     @nextcord.slash_command(
         name="manual-setup",
