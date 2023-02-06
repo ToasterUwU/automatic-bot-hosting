@@ -49,7 +49,7 @@ class BotSetup(commands.Cog):
                 )
                 await webhook.send(message)
 
-    def setup_new_bot(self, name: str):
+    async def setup_bot(self, name: str):
         try:
             service = self.SERVICE_TEMPLATE.format(
                 name=name, BOT_ROOT_PATH=self.BOT_ROOT_PATH
@@ -60,38 +60,46 @@ class BotSetup(commands.Cog):
             return "Error while saving service file"
 
         try:
-            subprocess.Popen(
+            process = subprocess.Popen(
                 f"python3 -m venv {self.BOT_ROOT_PATH}/{name}/.venv",
                 shell=True,
                 stderr=sys.stderr,
-            ).communicate()
+            )
+
+            await asyncio.get_running_loop().run_in_executor(None, process.communicate)
         except:
             return "Error while making venv."
 
         try:
-            subprocess.Popen(
+            process = subprocess.Popen(
                 f"{self.BOT_ROOT_PATH}/{name}/.venv/bin/pip3 install -U -r {self.BOT_ROOT_PATH}/{name}/requirements.txt",
                 shell=True,
                 stderr=sys.stderr,
-            ).communicate()
+            )
+
+            await asyncio.get_running_loop().run_in_executor(None, process.communicate)
         except:
             return "Error while getting dependencies."
 
         try:
-            subprocess.Popen(
+            process = subprocess.Popen(
                 f"systemctl enable discord-bot-{name}.service",
                 shell=True,
                 stderr=sys.stderr,
-            ).communicate()
+            )
+
+            await asyncio.get_running_loop().run_in_executor(None, process.communicate)
         except:
             return "Error while enabling service file"
 
         try:
-            subprocess.Popen(
+            process = subprocess.Popen(
                 f"systemctl restart discord-bot-{name}.service",
                 shell=True,
                 stderr=sys.stderr,
-            ).communicate()
+            )
+
+            await asyncio.get_running_loop().run_in_executor(None, process.communicate)
         except:
             return "Error while starting service"
 
@@ -103,7 +111,9 @@ class BotSetup(commands.Cog):
             if should_update:
                 fetch_info = Repo(repo_dir).remote().pull()
                 if len(fetch_info) > 0:
-                    changes = '\n'.join([str(x) for x in fetch_info])
+                    await self.setup_bot(repo_dir.rsplit("/", 1)[1])
+
+                    changes = "\n".join([str(x) for x in fetch_info])
                     await self.log(
                         f"`UPDATED:` {repo_dir} with `{len(fetch_info)}` changes.\n{changes}"
                     )
@@ -150,7 +160,7 @@ class BotSetup(commands.Cog):
             await interaction.send("Error while deleting temp zip file")
             return
 
-        end_message = await asyncio.get_running_loop().run_in_executor(None, self.setup_new_bot, name)
+        end_message = await self.setup_bot(name)
         await interaction.send(end_message)
 
         await self.log(f"`SETUP:` {self.BOT_ROOT_PATH}/{name} in `MANUAL` mode")
@@ -178,7 +188,7 @@ class BotSetup(commands.Cog):
 
         try:
             Repo.clone_from(
-                f"ssh://git@github.com:{github_repo_name}.git",
+                f"git@github.com:{github_repo_name}.git",
                 f"{self.BOT_ROOT_PATH}/{name}",
             )
         except:
@@ -190,7 +200,7 @@ class BotSetup(commands.Cog):
         self.repodirs_to_update[f"{self.BOT_ROOT_PATH}/{name}"] = True
         self.repodirs_to_update.save()
 
-        end_message = await asyncio.get_running_loop().run_in_executor(None, self.setup_new_bot, name)
+        end_message = await self.setup_bot(name)
         await interaction.send(end_message)
 
         await self.log(f"`SETUP:` {self.BOT_ROOT_PATH}/{name} in `AUTOMATIC` mode")
