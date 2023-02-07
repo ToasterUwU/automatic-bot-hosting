@@ -132,7 +132,7 @@ class BotSetup(commands.Cog):
                                 [x.hexsha for x in missing_commits]
                             )
                             await self.log(
-                                f"`UPDATED:` {repo_dir} with {len(missing_commits)}\n{commit_hashes}"
+                                f"`UPDATED:` {repo_dir} with {len(missing_commits)} commits\n{commit_hashes}"
                             )
                         else:
                             await self.log(
