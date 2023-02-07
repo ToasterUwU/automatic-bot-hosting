@@ -111,17 +111,16 @@ class BotSetup(commands.Cog):
         for repo_dir, should_update in self.repodirs_to_update.items():
             if should_update:
                 repo = Repo(repo_dir)
-                repo.git.
 
-                head = repo.branches[1].checkout()
+                await asyncio.get_running_loop().run_in_executor(
+                    None, repo.remotes.origin.fetch
+                )
 
-                # head = repo.head.ref
-                tracking = head.tracking_branch()
-                if tracking:
+                local_branch = repo.head.ref
+                remote_branch = local_branch.tracking_branch()
+                if remote_branch:
                     missing_commits = list(
-                        tracking.commit.iter_items(
-                            repo, f"{head.path}..{tracking.path}"
-                        )
+                        repo.iter_commits(f"{local_branch.name}..{remote_branch.name}")
                     )
 
                     if len(missing_commits) > 0:
@@ -129,7 +128,12 @@ class BotSetup(commands.Cog):
 
                         end_message = await self.setup_bot(repo_dir.rsplit("/", 1)[1])
                         if end_message == "Bot set up and running.":
-                            await self.log(f"`UPDATED:` {repo_dir}")
+                            commit_hashes = "\n".join(
+                                [x.hexsha for x in missing_commits]
+                            )
+                            await self.log(
+                                f"`UPDATED:` {repo_dir} with {len(missing_commits)}\n{commit_hashes}"
+                            )
                         else:
                             await self.log(
                                 f"`ERROR:` {repo_dir} Couldnt update.\n{end_message}"
