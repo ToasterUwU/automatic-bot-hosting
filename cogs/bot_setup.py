@@ -124,13 +124,17 @@ class BotSetup(commands.Cog):
                     )
 
                     if len(missing_commits) > 0:
+                        commit_hashes = "\n".join([x.hexsha for x in missing_commits])
+
                         repo.remote().pull()
+
+                        if repo_dir == os.getcwd():
+                            await self.log(
+                                f"`SELF UPDATE:` with {len(missing_commits)} commit(s)\n{commit_hashes}"
+                            )
 
                         end_message = await self.setup_bot(repo_dir.rsplit("/", 1)[1])
                         if end_message == "Bot set up and running.":
-                            commit_hashes = "\n".join(
-                                [x.hexsha for x in missing_commits]
-                            )
                             await self.log(
                                 f"`UPDATED:` {repo_dir} with {len(missing_commits)} commit(s)\n{commit_hashes}"
                             )
