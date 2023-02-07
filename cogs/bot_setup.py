@@ -5,6 +5,7 @@ import sys
 from typing import Optional
 
 import aiohttp
+import git
 import nextcord
 from git.repo import Repo
 from nextcord.ext import commands, tasks
@@ -110,11 +111,17 @@ class BotSetup(commands.Cog):
         for repo_dir, should_update in self.repodirs_to_update.items():
             if should_update:
                 repo = Repo(repo_dir)
-                head = repo.head.ref
+                repo.git.
+
+                head = repo.branches[1].checkout()
+
+                # head = repo.head.ref
                 tracking = head.tracking_branch()
                 if tracking:
-                    missing_commits = tracking.commit.list_items(
-                        repo, f"{head.path}..{tracking.path}"
+                    missing_commits = list(
+                        tracking.commit.iter_items(
+                            repo, f"{head.path}..{tracking.path}"
+                        )
                     )
 
                     if len(missing_commits) > 0:
