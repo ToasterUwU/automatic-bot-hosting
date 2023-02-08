@@ -42,13 +42,20 @@ class BotSetup(commands.Cog):
         else:
             return False
 
-    async def log(self, message: str):
+    def get_comparison_link(self, repo: Repo, from_commit: str, to_commit: str):
+        repo_name = "/".join(
+            repo.remotes.origin.url.replace(".git", "").rsplit("/", 2)[1:]
+        )
+
+        return f"https://github.com/{repo_name}/compare/{from_commit}..{to_commit}"
+
+    async def log(self, title: str, message: str):
         if CONFIG["GENERAL"]["ERROR_WEBHOOK_URL"]:
             async with aiohttp.ClientSession() as session:
                 webhook = nextcord.Webhook.from_url(
                     CONFIG["GENERAL"]["ERROR_WEBHOOK_URL"], session=session
                 )
-                await webhook.send(message)
+                await webhook.send(embed=fancy_embed(title, message))
 
     async def setup_bot(self, name: str):
         try:
@@ -130,20 +137,22 @@ class BotSetup(commands.Cog):
 
                         if repo_dir == os.getcwd():
                             await self.log(
-                                f"`SELF UPDATE:` with {len(missing_commits)} commit(s)\n{commit_hashes}"
+                                "SELF UPDATE",
+                                f"With {len(missing_commits)} commit(s)\n{commit_hashes}\n\n{self.get_comparison_link(repo, missing_commits[-1].hexsha, missing_commits[0].hexsha)}",
                             )
 
                         end_message = await self.setup_bot(repo_dir.rsplit("/", 1)[1])
                         if end_message == "Bot set up and running.":
                             await self.log(
-                                f"`UPDATED:` {repo_dir} with {len(missing_commits)} commit(s)\n{commit_hashes}"
+                                "UPDATED",
+                                f"{repo_dir} with {len(missing_commits)} commit(s)\n{commit_hashes}\n\n{self.get_comparison_link(repo, missing_commits[-1].hexsha, missing_commits[0].hexsha)}",
                             )
                         else:
                             await self.log(
-                                f"`ERROR:` {repo_dir} Couldnt update.\n{end_message}"
+                                "ERROR", f"{repo_dir} Couldnt update.\n{end_message}"
                             )
                 else:
-                    await self.log(f"`ERROR:` {repo_dir} Couldnt reach GitHub")
+                    await self.log("ERROR", f"{repo_dir} Couldnt reach GitHub")
 
     @nextcord.slash_command(
         name="manual-setup",
@@ -190,7 +199,7 @@ class BotSetup(commands.Cog):
         end_message = await self.setup_bot(name)
         await interaction.send(end_message)
 
-        await self.log(f"`SETUP:` {self.BOT_ROOT_PATH}/{name} in `MANUAL` mode")
+        await self.log("SETUP", f"{self.BOT_ROOT_PATH}/{name} in `MANUAL` mode")
 
     @nextcord.slash_command(
         name="github-setup",
@@ -230,7 +239,7 @@ class BotSetup(commands.Cog):
         end_message = await self.setup_bot(name)
         await interaction.send(end_message)
 
-        await self.log(f"`SETUP:` {self.BOT_ROOT_PATH}/{name} in `AUTOMATIC` mode")
+        await self.log("SETUP", f"{self.BOT_ROOT_PATH}/{name} in `AUTOMATIC` mode")
 
     @nextcord.slash_command(
         name="toggle-auto-update",
