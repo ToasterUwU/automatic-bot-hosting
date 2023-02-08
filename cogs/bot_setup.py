@@ -42,9 +42,7 @@ class BotSetup(commands.Cog):
             return False
 
     def get_comparison_link(self, repo: Repo, from_commit: str, to_commit: str):
-        repo_name = "/".join(
-            repo.remotes.origin.url.replace(".git", "").rsplit("/", 2)[1:]
-        )
+        repo_name = repo.remotes.origin.url.replace(".git", "").rsplit(":", 1)[-1]
 
         if from_commit == to_commit:
             return f"https://github.com/{repo_name}/commit/{from_commit}"
