@@ -16,6 +16,7 @@ from internal_tools.discord import *
 
 # I just need some test commits
 
+
 class BotSetup(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
@@ -59,7 +60,7 @@ class BotSetup(commands.Cog):
                 )
                 await webhook.send(embed=fancy_embed(title, message))
 
-    async def setup_bot(self, name: str):
+    async def setup_bot(self, name: str, restart: bool = True):
         try:
             service = self.SERVICE_TEMPLATE.format(
                 name=name, BOT_ROOT_PATH=self.BOT_ROOT_PATH
@@ -102,18 +103,19 @@ class BotSetup(commands.Cog):
         except:
             return "Error while enabling service file"
 
-        await asyncio.sleep(10)  # Wait, just in case
+        if restart:
+            try:
+                process = subprocess.Popen(
+                    f"systemctl restart discord-bot-{name}.service",
+                    shell=True,
+                    stderr=sys.stderr,
+                )
 
-        try:
-            process = subprocess.Popen(
-                f"systemctl restart discord-bot-{name}.service",
-                shell=True,
-                stderr=sys.stderr,
-            )
-
-            await asyncio.get_running_loop().run_in_executor(None, process.communicate)
-        except:
-            return "Error while starting service"
+                await asyncio.get_running_loop().run_in_executor(
+                    None, process.communicate
+                )
+            except:
+                return "Error while starting service"
 
         return "Bot set up and running."
 
@@ -139,11 +141,10 @@ class BotSetup(commands.Cog):
 
                         repo.remote().pull()
 
-                        test = self.get_comparison_link(
-                            repo, missing_commits[-1].hexsha, missing_commits[0].hexsha
+                        bot_name = repo_dir.rsplit("/", 1)[1]
+                        end_message = await self.setup_bot(
+                            bot_name, restart=repo_dir != os.getcwd()
                         )
-
-                        end_message = await self.setup_bot(repo_dir.rsplit("/", 1)[1])
                         if end_message == "Bot set up and running.":
                             await self.log(
                                 "UPDATED",
@@ -155,6 +156,16 @@ class BotSetup(commands.Cog):
                             )
 
                         if repo_dir == os.getcwd():
+                            process = subprocess.Popen(
+                                f"systemctl restart discord-bot-{bot_name}.service",
+                                shell=True,
+                                stderr=sys.stderr,
+                            )
+
+                            await asyncio.get_running_loop().run_in_executor(
+                                None, process.communicate
+                            )
+
                             break  # Bot will restart, so dont start anything new
                 else:
                     await self.log("ERROR", f"{repo_dir} Couldnt reach GitHub")
