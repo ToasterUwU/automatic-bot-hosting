@@ -139,11 +139,11 @@ class BotSetup(commands.Cog):
 
                         repo.remote().pull()
 
-                        if repo_dir == os.getcwd():
-                            await self.log(
-                                "SELF UPDATE",
-                                f"With {len(missing_commits)} commit(s)\n{commit_hashes}\n\n{self.get_comparison_link(repo, missing_commits[-1].hexsha, missing_commits[0].hexsha)}",
-                            )
+                        # if repo_dir == os.getcwd():
+                        #     await self.log(
+                        #         "SELF UPDATE",
+                        #         f"With {len(missing_commits)} commit(s)\n{commit_hashes}\n\n{self.get_comparison_link(repo, missing_commits[-1].hexsha, missing_commits[0].hexsha)}",
+                        #     )
 
                         end_message = await self.setup_bot(repo_dir.rsplit("/", 1)[1])
                         if end_message == "Bot set up and running.":
