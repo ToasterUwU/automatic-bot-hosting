@@ -14,7 +14,7 @@ from internal_tools.configuration import CONFIG, JsonDictSaver
 from internal_tools.discord import *
 
 
-# I just need some test commits
+# I dont anymore
 
 
 class BotSetup(commands.Cog):
