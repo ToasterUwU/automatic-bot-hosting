@@ -145,7 +145,7 @@ class BotSetup(commands.Cog):
                         if end_message == "Bot set up and running.":
                             await self.log(
                                 "UPDATED",
-                                f"{repo_dir} with {len(missing_commits)} commit(s)\n{commit_hashes}\n\n{self.get_comparison_link(repo, missing_commits[-1].hexsha, missing_commits[0].hexsha)}",
+                                f"{repo_dir} with {len(missing_commits)} commit(s)\n{commit_hashes}\n\n[See what changed]({self.get_comparison_link(repo, missing_commits[-1].hexsha, missing_commits[0].hexsha)})",
                             )
                         else:
                             await self.log(
