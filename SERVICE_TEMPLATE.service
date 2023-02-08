@@ -3,7 +3,7 @@ Description={name}
 
 [Service]
 WorkingDirectory={BOT_ROOT_PATH}/{name}
-ExecStart=python3 bot.py
+ExecStart={BOT_ROOT_PATH}/{name}/.venv./bin/python3 bot.py
 Restart=always
 
 [Install]
