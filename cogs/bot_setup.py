@@ -5,7 +5,6 @@ import sys
 from typing import Optional
 
 import aiohttp
-import git
 import nextcord
 from git.repo import Repo
 from nextcord.ext import commands, tasks
@@ -102,6 +101,8 @@ class BotSetup(commands.Cog):
             await asyncio.get_running_loop().run_in_executor(None, process.communicate)
         except:
             return "Error while enabling service file"
+
+        await asyncio.sleep(10)  # Wait, just in case
 
         try:
             process = subprocess.Popen(
