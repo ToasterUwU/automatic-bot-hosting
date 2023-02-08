@@ -137,6 +137,10 @@ class BotSetup(commands.Cog):
 
                         repo.remote().pull()
 
+                        test = self.get_comparison_link(
+                            repo, missing_commits[-1].hexsha, missing_commits[0].hexsha
+                        )
+
                         end_message = await self.setup_bot(repo_dir.rsplit("/", 1)[1])
                         if end_message == "Bot set up and running.":
                             await self.log(
