@@ -91,6 +91,17 @@ class BotSetup(commands.Cog):
 
         try:
             process = subprocess.Popen(
+                f"systemctl daemon-reload",
+                shell=True,
+                stderr=sys.stderr,
+            )
+
+            await asyncio.get_running_loop().run_in_executor(None, process.communicate)
+        except:
+            return "Error while reloading service files"
+
+        try:
+            process = subprocess.Popen(
                 f"systemctl enable discord-bot-{name}.service",
                 shell=True,
                 stderr=sys.stderr,
