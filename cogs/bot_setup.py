@@ -1,5 +1,7 @@
 import asyncio
+import json
 import os
+import shutil
 import subprocess
 import sys
 from typing import Optional
@@ -58,7 +60,9 @@ class BotSetup(commands.Cog):
                 )
                 await webhook.send(embed=fancy_embed(title, message))
 
-    async def setup_bot(self, name: str, restart: bool = True):
+    async def setup_bot(
+        self, name: str, restart: bool = True, token: Optional[str] = None
+    ):
         try:
             service = self.SERVICE_TEMPLATE.format(
                 name=name, BOT_ROOT_PATH=self.BOT_ROOT_PATH
@@ -89,6 +93,27 @@ class BotSetup(commands.Cog):
             await asyncio.get_running_loop().run_in_executor(None, process.communicate)
         except:
             return "Error while getting dependencies."
+
+        if token:
+            try:
+                if not os.path.exists(
+                    f"{self.BOT_ROOT_PATH}/{name}/config/GENERAL.json"
+                ):
+                    shutil.copyfile(
+                        f"{self.BOT_ROOT_PATH}/{name}/config/default/GENERAL.json",
+                        f"{self.BOT_ROOT_PATH}/{name}/config/GENERAL.json",
+                    )
+
+                with open(f"{self.BOT_ROOT_PATH}/{name}/config/GENERAL.json", "r") as f:
+                    general_config = json.load(f)
+
+                general_config["TOKEN"] = token
+
+                with open(f"{self.BOT_ROOT_PATH}/{name}/config/GENERAL.json", "w") as f:
+                    json.dump(general_config, f, indent=2)
+
+            except:
+                return "Error while entering Token."
 
         try:
             process = subprocess.Popen(
@@ -189,6 +214,7 @@ class BotSetup(commands.Cog):
         interaction: nextcord.Interaction,
         name: str,
         source_code: nextcord.Attachment,
+        token: Optional[str] = None,
     ):
         await interaction.response.defer()
 
@@ -221,7 +247,7 @@ class BotSetup(commands.Cog):
             await interaction.send("Error while deleting temp zip file")
             return
 
-        end_message = await self.setup_bot(name)
+        end_message = await self.setup_bot(name, token=token)
         await interaction.send(end_message)
 
         await self.log("SETUP", f"{self.BOT_ROOT_PATH}/{name} in `MANUAL` mode")
@@ -232,7 +258,10 @@ class BotSetup(commands.Cog):
         guild_ids=CONFIG["GENERAL"]["OWNER_COG_GUILD_IDS"],
     )
     async def github_setup(
-        self, interaction: nextcord.Interaction, github_repo_name: str
+        self,
+        interaction: nextcord.Interaction,
+        github_repo_name: str,
+        token: Optional[str] = None,
     ):
         await interaction.response.defer()
 
@@ -261,7 +290,7 @@ class BotSetup(commands.Cog):
         self.repodirs_to_update[f"{self.BOT_ROOT_PATH}/{name}"] = True
         self.repodirs_to_update.save()
 
-        end_message = await self.setup_bot(name)
+        end_message = await self.setup_bot(name, token=token)
         await interaction.send(end_message)
 
         await self.log("SETUP", f"{self.BOT_ROOT_PATH}/{name} in `AUTOMATIC` mode")
