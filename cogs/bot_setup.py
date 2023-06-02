@@ -47,9 +47,6 @@ class BotSetup(commands.Cog):
         repo_name = repo.remotes.origin.url.replace(".git", "").rsplit(":", 1)[-1]
         repo_name = "/".join(repo_name.rsplit("/")[-2:])
 
-        if from_commit == to_commit:
-            return f"https://github.com/{repo_name}/commit/{from_commit}"
-
         return f"https://github.com/{repo_name}/compare/{from_commit}..{to_commit}"
 
     async def log(self, title: str, message: str):
