@@ -201,6 +201,10 @@ class BotSetup(commands.Cog):
                 else:
                     await self.log("ERROR", f"{repo_dir} Couldnt reach GitHub")
 
+    @update_repos.error
+    async def update_repos_on_error(self, e: BaseException):
+        self.update_repos.restart()
+
     @nextcord.slash_command(
         name="manual-setup",
         description="Uses a source_code.zip to setup Bot. This requires manual updates.",
