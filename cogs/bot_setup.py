@@ -168,6 +168,8 @@ class BotSetup(commands.Cog):
                     )
 
                     if len(missing_commits) > 0:
+                        before_update_commit = local_branch.commit.hexsha
+
                         commit_hashes = "\n".join([x.hexsha for x in missing_commits])
 
                         repo.remote().pull()
@@ -179,7 +181,7 @@ class BotSetup(commands.Cog):
                         if end_message == "Bot set up and running.":
                             await self.log(
                                 "UPDATED",
-                                f"{repo_dir} with {len(missing_commits)} commit(s)\n{commit_hashes}\n\n[See what changed]({self.get_comparison_link(repo, local_branch.commit.hexsha, missing_commits[0].hexsha)})",
+                                f"{repo_dir} with {len(missing_commits)} commit(s)\n{commit_hashes}\n\n[See what changed]({self.get_comparison_link(repo, before_update_commit, missing_commits[0].hexsha)})",
                             )
                         else:
                             await self.log(
