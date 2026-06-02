@@ -1,4 +1,4 @@
 nextcord[speed, voice]  == 3.2.*
 orjson                  == 3.11.*
-aiohttp                 == 3.13.*
+aiohttp                 == 3.14.*
 GitPython               == 3.1.44
